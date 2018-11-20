@@ -25,12 +25,7 @@ int main(int argc, char **argv)
 
 	if ( (hpos = readPGMB_header(infname.c_str(), &rows, &cols, &max_color)) <= 0 )	   exit(1);
 
-	unsigned char **a = new unsigned char* [rows];
-	a[0] = new unsigned char [rows*cols];
-	for(int i = 1; i < rows; i++)
-		a[i] = a[i-1] + cols;
 
-	if( readPGMB_data(a[0], infname.c_str(), hpos, rows, cols, max_color) == 0 )	   exit(1);
 
 	//przygotowanie czarno-bialej tablicy wyjsciowej
 
@@ -41,14 +36,7 @@ int main(int argc, char **argv)
 	
 	clock_t begin = clock();
 
-	//for (i = 0; i < rows; ++i){
-		//for (j = 0; j < cols; ++j){
-			//b[i][j] = (a[i][j] > 128 ) ?  255 : 0;
-		//}
-	//}
-	for (i = 0; i < rows * cols; ++i) {
-		*(*b + i) = (*(*a + i) > 128 ) ?  255 : 0;
-	}
+	
 	
 	clock_t end = clock();
   	double elapsed = double(end - begin) / CLOCKS_PER_SEC;
