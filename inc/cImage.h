@@ -22,14 +22,14 @@ private:
     uint8_t colorChannels = 0;
 
 public:
-    pixelArray chA = NULL;     // Alpha channel
-    pixelArray chR = NULL;     // Red channel
-    pixelArray chG = NULL;     // Greyscale or Green in case of RGB
-    pixelArray chB = NULL;     // Blue channel
+    pixelArray chA = nullptr;     // Alpha channel
+    pixelArray chR = nullptr;     // Red channel
+    pixelArray chG = nullptr;     // Greyscale or Green in case of RGB
+    pixelArray chB = nullptr;     // Blue channel
 
-    int rows = 0;
-    int columns = 0;
-    int max_colors = 0;
+    unsigned int rows = 0;
+    unsigned int columns = 0;
+    unsigned int max_colors = 0;
 
 public:
 
@@ -46,7 +46,7 @@ public:
     bool isRgb();
     bool isRgba();
 
-    static void createPixelArray(pixelArray arr, int rows, int columns);
+    static void createPixelArray(pixelArray &arr, int rows, int columns);
     static void deletePixelArray(pixelArray arr);
 
 private:

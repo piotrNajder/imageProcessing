@@ -1,7 +1,5 @@
 #include <fstream>
-#include <iterator>
-#include <algorithm>
-#include "inc\cImage.h"
+#include "../inc/cImage.h"
 
 cImage::cImage(const std::string fName){
     std::ifstream infile(fName);
@@ -10,8 +8,8 @@ cImage::cImage(const std::string fName){
         std::size_t dotPos = fName.find_last_of(".");
         std::string fileExt = fName.substr(dotPos + 1);
         if (fileExt != "") {
-            if (fileExt == "pgm") srcFileType == eFileType::pgm;
-            else if (fileExt == "ppm") srcFileType == eFileType::ppm;
+            if (fileExt == "pgm") srcFileType = eFileType::pgm;
+            else if (fileExt == "ppm") srcFileType = eFileType::ppm;
             // TODO: handle other 
             else {
                 throw std::invalid_argument("File extension " + fileExt +" not supported");
@@ -35,7 +33,7 @@ cImage::cImage(int numOfColorChannels, int r, int c) {
         rows = r; columns = c;
         chG = new unsigned char* [rows];
         chG[0] = new unsigned char [rows * columns];
-        for(int i = 1; i < rows; i++)
+        for(unsigned int i = 1; i < rows; i++)
             chG[i] = chG[i-1] + columns;
     }
     else if (numOfColorChannels == 3) {
@@ -47,7 +45,7 @@ cImage::cImage(int numOfColorChannels, int r, int c) {
         chB = new unsigned char* [rows];
         chB[0] = new unsigned char [rows * columns];
 
-        for(int i = 1; i < rows; i++) {
+        for(unsigned int i = 1; i < rows; i++) {
             chR[i] = chR[i-1] + columns;
             chG[i] = chG[i-1] + columns;
             chB[i] = chB[i-1] + columns;
@@ -59,31 +57,42 @@ cImage::cImage(int numOfColorChannels, int r, int c) {
 }
 
 cImage::~cImage(){
-    if (chA[0] != NULL) delete[] chA[0];
-    if (chA != NULL) delete[] chA;
-    if (chR[0] != NULL) delete[] chR[0];
-    if (chR != NULL) delete[] chR;
-    if (chG[0] != NULL) delete[] chG[0];
-    if (chG != NULL) delete[] chG;
-    if (chB[0] != NULL) delete[] chB[0];
-    if (chB != NULL) delete[] chB;
+    if (chA != nullptr) {
+        if (chA[0] != nullptr) delete[] chA[0];
+        delete[] chA;
+    }
+    if (chR != nullptr) {
+        if (chR[0] != nullptr) delete[] chR[0];
+        delete[] chR;
+    }
+    if (chG != nullptr) {
+        if (chG[0] != nullptr) delete[] chG[0];
+        delete[] chG;
+    }
+    if (chB != nullptr) {
+        if (chB[0] != nullptr) delete[] chB[0];
+        delete[] chB;
+    }
+    
 }
 
 bool cImage::read() {
     if(srcFileName != "" && srcFileType != eFileType::unknown) {
+        int hpos;
         switch( srcFileType ) {
             case eFileType::pgm:
-                int hpos;
-                if ( (hpos = readPGMB_header() <= 0 )) return false;
+                hpos = readPGMB_header();
+                if ( hpos <= 0 ) return false;
                 chG = new unsigned char* [rows];
                 chG[0] = new unsigned char [rows * columns];
-                for(int i = 1; i < rows; i++)
+                for(unsigned int i = 1; i < rows; i++) {
                     chG[i] = chG[i-1] + columns;
+                }
 	            if( readPGMB_data(hpos) == 0 ) return false;
                 break;
             case eFileType::ppm:
-                int hpos;
-                if ( (hpos = readPGMB_header() <= 0 )) return false;
+                hpos = readPPMB_header();
+                if ( hpos <= 0 ) return false;
 
                 chR = new unsigned char* [rows];
                 chR[0] = new unsigned char [rows * columns];
@@ -92,7 +101,7 @@ bool cImage::read() {
                 chB = new unsigned char* [rows];
                 chB[0] = new unsigned char [rows * columns];
 
-                for(int i = 1; i < rows; i++) {
+                for(unsigned int i = 1; i < rows; i++) {
                     chR[i] = chR[i-1] + columns;
                     chG[i] = chG[i-1] + columns;
                     chB[i] = chB[i-1] + columns;
@@ -111,7 +120,7 @@ bool cImage::read() {
 }
 
 bool cImage::write(const std::string fName) {
-
+    return false;
 }
 
 bool cImage::isGreyscale() {
@@ -172,11 +181,11 @@ int cImage::readPGMB_header() {
     }
 
 	skipcomments(fp); 
-	fscanf(fp, "%d", columns);
+	fscanf(fp, "%d", &columns);
 	skipcomments(fp);
-	fscanf(fp, "%d", rows);
+	fscanf(fp, "%d", &rows);
 	skipcomments(fp);
-	fscanf(fp, "%d", max_colors);
+	fscanf(fp, "%d", &max_colors);
 	fgetc(fp);
 
 	hlen = ftell(fp); //header lenght
@@ -191,7 +200,7 @@ int cImage::readPGMB_data(int headerLength) {
     FILE *fp;
 	if((fp = fopen(srcFileName.c_str(), "rb")) == NULL) return 0;
 	fseek(fp, headerLength, SEEK_SET);
-	int readedrows = fread(chG, columns, rows, fp);
+	size_t readedrows = fread(chG[0], columns, rows, fp);
 	fclose(fp);
 	
 	if(rows != readedrows)
@@ -232,11 +241,11 @@ int cImage::readPPMB_header() {
 		{ fclose(fp); return 0; }	//probably not pgm binary file...
 
 	skipcomments(fp); 
-	fscanf(fp, "%d", columns);
+	fscanf(fp, "%d", &columns);
 	skipcomments(fp);
-	fscanf(fp, "%d", rows);
+	fscanf(fp, "%d", &rows);
 	skipcomments(fp);
-	fscanf(fp, "%d", max_colors);
+	fscanf(fp, "%d", &max_colors);
 	fgetc(fp);
 
 	hlen = ftell(fp); //header lenght
@@ -286,7 +295,7 @@ int cImage::writePPMB_image(const std::string fname ) {
 	return(1);
 }
 
-void cImage::createPixelArray(pixelArray arr, int rows, int columns) {
+void cImage::createPixelArray(pixelArray &arr, int rows, int columns) {
     arr = new unsigned char* [rows];
     arr[0] = new unsigned char [rows * columns];
     for(int i = 1; i < rows; i++)
@@ -294,6 +303,6 @@ void cImage::createPixelArray(pixelArray arr, int rows, int columns) {
 }
 
 void cImage::deletePixelArray(pixelArray arr) {
-    if (arr[0] != NULL) delete[] arr[0];
-    if (arr != NULL) delete[] arr;
+    if (arr[0] != nullptr) delete[] arr[0];
+    if (arr != nullptr) delete[] arr;
 }
