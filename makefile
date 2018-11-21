@@ -1,6 +1,7 @@
 EXE = imProc
+EXE_DIR = bin
 SRC_DIR = src
-OBJ_DIR = bin
+OBJ_DIR = obj
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
@@ -11,9 +12,9 @@ CFLAGS=-g -Wall
 LDFLAGS +=
 LDLIBS +=
 
-all: $(EXE)
+all: $(EXE_DIR)/$(EXE)
 
-$(EXE): $(OBJ)
+$(EXE_DIR)/$(EXE): $(OBJ)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp

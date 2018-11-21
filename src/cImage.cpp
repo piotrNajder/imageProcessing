@@ -14,6 +14,7 @@ cImage::cImage(const std::string fName){
             else {
                 throw std::invalid_argument("File extension " + fileExt +" not supported");
             }
+            read();
         }
     }
 }
@@ -120,28 +121,48 @@ bool cImage::read() {
 }
 
 bool cImage::write(const std::string fName) {
-    return false;
+    srcFileName = fName;
+    std::size_t dotPos = fName.find_last_of(".");
+    std::string fileExt = fName.substr(dotPos + 1);
+    if (fileExt != "") {
+        if (fileExt == "pgm") {
+            srcFileType = eFileType::pgm;
+            if (isGreyscale()) {
+                writePGMB_image(srcFileName.c_str());
+            }
+        }
+        else if (fileExt == "ppm") {
+            srcFileType = eFileType::ppm;
+            if (isRgb()) {
+                writePPMB_image(srcFileName.c_str());
+            }
+        }
+        // TODO: handle other 
+        else {
+            throw std::invalid_argument("File extension " + fileExt +" not supported");
+        }
+    }
 }
 
 bool cImage::isGreyscale() {
-    if (chA == NULL && chR == NULL &&
-        chB == NULL && chG != NULL) {
+    if (chA == nullptr && chR == nullptr &&
+        chB == nullptr && chG != nullptr) {
             return true;
         }
     else return false;
 }
 
 bool cImage::isRgb() {
-    if (chA == NULL && chR != NULL &&
-        chB != NULL && chG != NULL) {
+    if (chA == nullptr && chR != nullptr &&
+        chB != nullptr && chG != nullptr) {
             return true;
         }
     else return false;
 }
 
 bool cImage::isRgba() {
-    if (chA != NULL && chR != NULL &&
-        chB != NULL && chG != NULL) {
+    if (chA != nullptr && chR != nullptr &&
+        chB != nullptr && chG != nullptr) {
             return true;
         }
     else return false;
