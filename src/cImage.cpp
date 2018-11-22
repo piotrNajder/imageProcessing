@@ -1,7 +1,10 @@
+#include <iostream>
 #include <fstream>
-#include "../inc/cImage.h"
+#include "cImage.h"
+#include <errno.h>
 
-cImage::cImage(const std::string fName){
+template <typename T>
+cImage<T>::cImage(const std::string fName){
     std::ifstream infile(fName);
     if (infile.good()) {
         srcFileName = fName;
@@ -19,45 +22,53 @@ cImage::cImage(const std::string fName){
     }
 }
 
-cImage::cImage(pixelArray gsArr, int r, int c) {
+template <typename T>
+cImage<T>::cImage(T **gsArr, unsigned int r, unsigned int c) {
     rows = r; columns = c;
     chG = gsArr;
 }
-cImage::cImage(pixelArray rArr, pixelArray gArr, pixelArray bArr, int r, int c) {
+
+template <typename T>
+cImage<T>::cImage(T **rArr, T **gArr, T **bArr, unsigned int r, unsigned int c) {
     rows = r; columns = c;
     chR = rArr; chG = gArr; chB = bArr;
 }
 
-cImage::cImage(int numOfColorChannels, int r, int c) {
+template <typename T>
+cImage<T>::cImage(uint8_t numOfColorChannels, unsigned int r, unsigned int c, unsigned int max_col) {
 
     if (numOfColorChannels == 1) {
         rows = r; columns = c;
-        chG = new unsigned char* [rows];
-        chG[0] = new unsigned char [rows * columns];
+        chG = new T* [rows];
+        chG[0] = new T [rows * columns];
         for(unsigned int i = 1; i < rows; i++)
             chG[i] = chG[i-1] + columns;
+		
+		max_colors = max_col;
     }
     else if (numOfColorChannels == 3) {
         rows = r; columns = c;
-        chR = new unsigned char* [rows];
-        chR[0] = new unsigned char [rows * columns];
-        chG = new unsigned char* [rows];
-        chG[0] = new unsigned char [rows * columns];
-        chB = new unsigned char* [rows];
-        chB[0] = new unsigned char [rows * columns];
+        chR = new T* [rows];
+        chR[0] = new T[rows * columns];
+        chG = new T* [rows];
+        chG[0] = new T[rows * columns];
+        chB = new T* [rows];
+        chB[0] = new T[rows * columns];
 
         for(unsigned int i = 1; i < rows; i++) {
             chR[i] = chR[i-1] + columns;
             chG[i] = chG[i-1] + columns;
             chB[i] = chB[i-1] + columns;
         }
+		max_colors = max_col;
     }
     else {
         throw std::invalid_argument("Only picture with 1 or 3 colors channels can be created.");
     }
 }
 
-cImage::~cImage(){
+template <typename T>
+cImage<T>::~cImage(){
     if (chA != nullptr) {
         if (chA[0] != nullptr) delete[] chA[0];
         delete[] chA;
@@ -77,15 +88,16 @@ cImage::~cImage(){
     
 }
 
-bool cImage::read() {
+template <typename T>
+bool cImage<T>::read() {
     if(srcFileName != "" && srcFileType != eFileType::unknown) {
         int hpos;
         switch( srcFileType ) {
             case eFileType::pgm:
                 hpos = readPGMB_header();
                 if ( hpos <= 0 ) return false;
-                chG = new unsigned char* [rows];
-                chG[0] = new unsigned char [rows * columns];
+                chG = new T* [rows];
+                chG[0] = new T[rows * columns];
                 for(unsigned int i = 1; i < rows; i++) {
                     chG[i] = chG[i-1] + columns;
                 }
@@ -95,12 +107,12 @@ bool cImage::read() {
                 hpos = readPPMB_header();
                 if ( hpos <= 0 ) return false;
 
-                chR = new unsigned char* [rows];
-                chR[0] = new unsigned char [rows * columns];
-                chG = new unsigned char* [rows];
-                chG[0] = new unsigned char [rows * columns];
-                chB = new unsigned char* [rows];
-                chB[0] = new unsigned char [rows * columns];
+                chR = new T* [rows];
+                chR[0] = new T[rows * columns];
+                chG = new T* [rows];
+                chG[0] = new T[rows * columns];
+                chB = new T* [rows];
+                chB[0] = new T[rows * columns];
 
                 for(unsigned int i = 1; i < rows; i++) {
                     chR[i] = chR[i-1] + columns;
@@ -108,7 +120,7 @@ bool cImage::read() {
                     chB[i] = chB[i-1] + columns;
                 }
 
-	            if( readPGMB_data(hpos) == 0 ) return false;
+	            if( readPPMB_data(hpos) == 0 ) return false;
 
                 break; 
             default:
@@ -120,7 +132,8 @@ bool cImage::read() {
     else return false;      // no name specified
 }
 
-bool cImage::write(const std::string fName) {
+template <typename T>
+bool cImage<T>::write(const std::string fName) {
     srcFileName = fName;
     std::size_t dotPos = fName.find_last_of(".");
     std::string fileExt = fName.substr(dotPos + 1);
@@ -144,7 +157,8 @@ bool cImage::write(const std::string fName) {
     }
 }
 
-bool cImage::isGreyscale() {
+template <typename T>
+bool cImage<T>::isGreyscale() {
     if (chA == nullptr && chR == nullptr &&
         chB == nullptr && chG != nullptr) {
             return true;
@@ -152,7 +166,8 @@ bool cImage::isGreyscale() {
     else return false;
 }
 
-bool cImage::isRgb() {
+template <typename T>
+bool cImage<T>::isRgb() {
     if (chA == nullptr && chR != nullptr &&
         chB != nullptr && chG != nullptr) {
             return true;
@@ -160,7 +175,8 @@ bool cImage::isRgb() {
     else return false;
 }
 
-bool cImage::isRgba() {
+template <typename T>
+bool cImage<T>::isRgba() {
     if (chA != nullptr && chR != nullptr &&
         chB != nullptr && chG != nullptr) {
             return true;
@@ -168,7 +184,8 @@ bool cImage::isRgba() {
     else return false;
 }
 
-void cImage::skipcomments(FILE *fp) {
+template <typename T>
+void cImage<T>::skipcomments(FILE *fp) {
 	int ch;
 	char line[256];
 
@@ -181,7 +198,8 @@ void cImage::skipcomments(FILE *fp) {
 		fseek(fp, -1, SEEK_CUR);
 }
 
-int cImage::readPGMB_header() {
+template <typename T>
+int cImage<T>::readPGMB_header() {
     FILE *fp;
 	size_t flen, hlen;
 	char signature[3];
@@ -217,7 +235,8 @@ int cImage::readPGMB_header() {
 	return hlen;	
 }
 
-int cImage::readPGMB_data(int headerLength) {
+template <typename T>
+int cImage<T>::readPGMB_data(unsigned int headerLength) {
     FILE *fp;
 	if((fp = fopen(srcFileName.c_str(), "rb")) == NULL) return 0;
 	fseek(fp, headerLength, SEEK_SET);
@@ -229,10 +248,14 @@ int cImage::readPGMB_data(int headerLength) {
 	return 1;
 }
 
-int cImage::writePGMB_image(const std::string fname) {
+template <typename T>
+int cImage<T>::writePGMB_image(const std::string fname) {
     FILE *fp;
 
-	if((fp = fopen(fname.c_str(), "wb")) == NULL) return(0);
+	if ((fp = fopen(fname.c_str(), "wb")) == NULL) {
+		std::cout << errno;
+		return(0);
+	}
 
 	fprintf(fp, "P5\n%d %d\n# eyetom.com\n%d\n", columns, rows, max_colors);
 
@@ -245,7 +268,8 @@ int cImage::writePGMB_image(const std::string fname) {
 	return(1);
 }
 
-int cImage::readPPMB_header() {
+template <typename T>
+int cImage<T>::readPPMB_header() {
 
     FILE *fp;
 	size_t flen, hlen;
@@ -277,11 +301,10 @@ int cImage::readPPMB_header() {
 	return hlen;
 }
 
-int cImage::readPPMB_data(int headerLength) {
+template <typename T>
+int cImage<T>::readPPMB_data(unsigned int headerLength) {
     long i, wxh;
 	FILE *fp;
-	
-	if (max_colors > 255) return 0;	//for now only 1 byte color values
 
 	if((fp = fopen(srcFileName.c_str(), "rb")) == NULL) return 0;
 
@@ -296,7 +319,8 @@ int cImage::readPPMB_data(int headerLength) {
 	return 1;
 }
 
-int cImage::writePPMB_image(const std::string fname ) {
+template <typename T>
+int cImage<T>::writePPMB_image(const std::string fname ) {
     long i, wxh;
 	FILE *fp;
 
@@ -316,14 +340,14 @@ int cImage::writePPMB_image(const std::string fname ) {
 	return(1);
 }
 
-void cImage::createPixelArray(pixelArray &arr, int rows, int columns) {
-    arr = new unsigned char* [rows];
-    arr[0] = new unsigned char [rows * columns];
-    for(int i = 1; i < rows; i++)
-        arr[i] = arr[i-1] + columns;        
-}
+// Workaround for linker problems with class templates
+// need to check for gcc if it's also a problem
+// 
 
-void cImage::deletePixelArray(pixelArray arr) {
-    if (arr[0] != nullptr) delete[] arr[0];
-    if (arr != nullptr) delete[] arr;
-}
+template class cImage<unsigned char>;
+template class cImage<char>;
+template class cImage<unsigned int>;
+template class cImage<int>;
+template class cImage<unsigned long>;
+template class cImage<long>;
+template class cImage<double>;

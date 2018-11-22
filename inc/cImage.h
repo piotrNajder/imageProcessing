@@ -3,8 +3,6 @@
 
 #include <string>
 
-typedef unsigned char** pixelArray;
-
 enum eFileType
 {
     pgm = 0,
@@ -14,6 +12,7 @@ enum eFileType
     unknown = 255
 };
 
+template <typename T = unsigned char>
 class cImage
 {
 private:
@@ -22,10 +21,10 @@ private:
     uint8_t colorChannels = 0;
 
 public:
-    pixelArray chA = nullptr;     // Alpha channel
-    pixelArray chR = nullptr;     // Red channel
-    pixelArray chG = nullptr;     // Greyscale or Green in case of RGB
-    pixelArray chB = nullptr;     // Blue channel
+	T **chA = nullptr;     // Alpha channel
+	T **chR = nullptr;     // Red channel
+	T **chG = nullptr;     // Greyscale or Green in case of RGB
+	T **chB = nullptr;     // Blue channel
 
     unsigned int rows = 0;
     unsigned int columns = 0;
@@ -34,9 +33,9 @@ public:
 public:
 
     cImage(const std::string fName);
-    cImage(pixelArray gsArr, int r, int c);
-    cImage(pixelArray rArr, pixelArray gArr, pixelArray bArr, int rows, int columns);
-    cImage(int numOfColorChannels, int r, int c);
+    cImage(T **gsArr, unsigned int r, unsigned int c);
+    cImage(T **rArr, T **gArr, T **bArr, unsigned int rows, unsigned int columns);
+	cImage(uint8_t numOfColorChannels, unsigned int r, unsigned int c, unsigned int max_col = 255);
     ~cImage();
 
     bool read();
@@ -46,16 +45,13 @@ public:
     bool isRgb();
     bool isRgba();
 
-    static void createPixelArray(pixelArray &arr, int rows, int columns);
-    static void deletePixelArray(pixelArray arr);
-
 private:
     int readPGMB_header();
-    int readPGMB_data(int headerLength);
+    int readPGMB_data(unsigned int headerLength);
     int writePGMB_image(const std::string fname);
 
     int readPPMB_header();
-    int readPPMB_data(int headerLength);
+    int readPPMB_data(unsigned int headerLength);
     int writePPMB_image(const std::string fname );
 
     void skipcomments(FILE *fp);
