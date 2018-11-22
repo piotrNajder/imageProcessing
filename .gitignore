@@ -1,0 +1,5 @@
+imProc
+bin/imProc
+obj/cImage.o
+obj/imgUtils.o
+obj/main.o

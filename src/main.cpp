@@ -1,12 +1,14 @@
 #include <string>
 #include <chrono>
 #include <iostream>
+#include <math.h>
+#include <cstring>
 #include "../inc/cImage.h"
 #include "../inc/imgUtils.h"
 
 typedef std::chrono::high_resolution_clock::time_point tPoint;
 typedef unsigned char pixelArray;
-typedef unsigned int pixelArrayUInt;
+typedef uint32_t pixelArrayUInt;
 
 tPoint timeNow() { return std::chrono::high_resolution_clock::now(); }
 
@@ -26,9 +28,9 @@ int main(int argc, char *argv[]) {
 	const std::string inF5 = "./input/book_rgb.ppm";                // 2048 x 1536 x 24 BPP
 	const std::string inF6 = "./input/book_rgb_big.ppm";            // 4096 x 3072 x 24 BPP
 	
-	//sauvolaBinarizationIntegralImage(inF1);
-	//sauvolaBinarizationIntegralImage(inF2);
-	//sauvolaBinarizationIntegralImage(inF3);
+	sauvolaBinarizationIntegralImage(inF1);
+	sauvolaBinarizationIntegralImage(inF2);
+	sauvolaBinarizationIntegralImage(inF3);
 
 	sauvolaBinarizationSimple(inF1);
 	sauvolaBinarizationSimple(inF2);
@@ -50,8 +52,8 @@ void grayscaleImageBinarization(const std::string fName) {
 
 	tPoint t1 = timeNow();
 
-	for (unsigned int i = 0; i < inImg.rows; ++i) {
-		for (unsigned int j = 0; j < inImg.columns; ++j) {
+	for (uint32_t i = 0; i < inImg.rows; ++i) {
+		for (uint32_t j = 0; j < inImg.columns; ++j) {
 			outImg.chG[i][j] = (inImg.chG[i][j] > 128) ? 255 : 0;
 		}
 	}
@@ -62,7 +64,7 @@ void grayscaleImageBinarization(const std::string fName) {
 
 	tPoint t3 = timeNow();
 
-	for (unsigned int i = 0; i < inImg.rows * inImg.columns; ++i) {
+	for (uint32_t i = 0; i < inImg.rows * inImg.columns; ++i) {
 		*(*outImg.chG + i) = (*(*inImg.chG + i) > 128) ? 255 : 0;
 	}
 
@@ -89,9 +91,9 @@ void rgbImageBinarization(const std::string fName) {
 
 	tPoint t1 = timeNow();
 
-	for (int i = 0; i < inImg.rows; ++i) {
-		for (int j = 0; j < inImg.columns; ++j) {
-			unsigned char gray_value = unsigned char((0.299 * inImg.chR[i][j]) +
+	for (uint32_t i = 0; i < inImg.rows; ++i) {
+		for (uint32_t j = 0; j < inImg.columns; ++j) {
+			unsigned char gray_value = (unsigned char)((0.299 * inImg.chR[i][j]) +
 													 (0.587 * inImg.chG[i][j]) +
 													 (0.114 * inImg.chB[i][j]));
 			outImg.chG[i][j] = (gray_value > 128) ? 255 : 0;
@@ -126,8 +128,8 @@ void bradleyBinarization(const std::string fName) {
 	int n = 7;
 	double fact = 0.95 / ((2 * n + 1) * (2 * n + 1));
 
-	for (int i = n + 1; i < inImg.rows - n - 1; ++i) {
-		for (int j = n + 1; j < inImg.columns - n - 1; ++j) {
+	for (uint32_t i = n + 1; i < inImg.rows - n - 1; ++i) {
+		for (uint32_t j = n + 1; j < inImg.columns - n - 1; ++j) {
 			if (inImg.chG[i][j] < (intImg.chG[i + n][j + n] +
 								   intImg.chG[i - n - 1][j - n - 1] -
 								   intImg.chG[i - n - 1][j + n] -
@@ -177,8 +179,8 @@ void sauvolaBinarizationIntegralImage(const std::string fName) {
 	float Rmax = 128.0;
 	float k = 0.12f;
 
-	for (unsigned int i = n + 1; i < inImg.rows - n; ++i) {
-		for (unsigned int j = n + 1; j < inImg.columns - n; ++j) {
+	for (uint32_t i = n + 1; i < inImg.rows - n; ++i) {
+		for (uint32_t j = n + 1; j < inImg.columns - n; ++j) {
 
 			sum = intImg.chG[i + n][j + n] +
 				intImg.chG[i - n - 1][j - n - 1] -
@@ -219,8 +221,8 @@ void sauvolaBinarizationSimple(const std::string fName) {
 
 	tPoint t1 = timeNow();
 
-	unsigned int n = 7;
-	unsigned int ncount = 0;
+	uint32_t n = 7;
+	uint32_t ncount = 0;
 
 	uint64_t sum = 0;	//suma jasnosci
 	uint64_t sum2 = 0;	//suma kwadratow jasnosci
@@ -230,8 +232,8 @@ void sauvolaBinarizationSimple(const std::string fName) {
 	float Rmax = 128.0;
 	float k = 0.12f;
 
-	for (unsigned int i = 0; i < inImg.rows; ++i) {
-		for (unsigned int j = 0; j < inImg.columns; ++j) {
+	for (uint32_t i = 0; i < inImg.rows; ++i) {
+		for (uint32_t j = 0; j < inImg.columns; ++j) {
 
 			sum = neighborsSum<>(inImg.chG, inImg.rows, inImg.columns, i, j, n, ncount);
 			m = sum / ncount;
@@ -276,30 +278,29 @@ void niblackBinarization(const std::string fName) {
 	int n = 7;
 	int ncount = (2 * n + 1) * (2 * n + 1);
 
-	float sum = 0;	//suma jasnosci
-	float sum2 = 0;	//suma kwadratow jasnosci
-	float m = 0.0;	//srednia jasnosc
-	float s = 0.0;	//odchylenie standardowe
+	float sum = 0;
+	float sum2 = 0;
+	float m = 0.0;
+	float s = 0.0;
 	float T = 0.0;
-	float Rmax = 128.0;
-	float k = 0.12f;
 
-	for (unsigned int i = n + 1; i < inImg.rows - n; ++i) {
-		for (unsigned int j = n + 1; j < inImg.columns - n; ++j) {
+	for (uint32_t i = n + 1; i < inImg.rows - n; ++i) {
+		for (uint32_t j = n + 1; j < inImg.columns - n; ++j) {
 
 			sum = intImg.chG[i + n][j + n] +
-				intImg.chG[i - n - 1][j - n - 1] -
-				intImg.chG[i - n - 1][j + n] -
-				intImg.chG[i + n][j - n - 1];
+				  intImg.chG[i - n - 1][j - n - 1] -
+				  intImg.chG[i - n - 1][j + n] -
+				  intImg.chG[i + n][j - n - 1];
+
 			sum2 = int_II_Img.chG[i + n][j + n] +
-				int_II_Img.chG[i - n - 1][j - n - 1] -
-				int_II_Img.chG[i - n - 1][j + n] -
-				int_II_Img.chG[i + n][j - n - 1];
+				   int_II_Img.chG[i - n - 1][j - n - 1] -
+				   int_II_Img.chG[i - n - 1][j + n] -
+				   int_II_Img.chG[i + n][j - n - 1];
 
 			m = sum / ncount;
 			s = sqrt(sum2 / ncount - m * m);
 
-			T = m - 0.4 * s;    //Niblack method
+			T = m - 0.4 * s;
 
 			outImg.chG[i][j] = (inImg.chG[i][j] < T) ? 0 : 255;
 		}

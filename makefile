@@ -6,11 +6,15 @@ OBJ_DIR = obj
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-CC=g++
+CC = g++
 CPPFLAGS += -Iinc
-CFLAGS=-g -Wall
+CFLAGS = -Wall
 LDFLAGS +=
 LDLIBS +=
+
+# set up extra flags for explicitly setting mode
+debug:   CPPFLAGS += -g
+release: CPPFLAGS += -O3
 
 all: $(EXE_DIR)/$(EXE)
 
@@ -19,6 +23,9 @@ $(EXE_DIR)/$(EXE): $(OBJ)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+debug:      all
+release:    all
 
 clean:
 	$(RM) $(OBJ)

@@ -2,17 +2,16 @@
 #include "imgUtils.h"
 
 template <typename T1, typename T2>
-void integral_image(T1 **inArray, T2 **outArray, unsigned int w, unsigned int h)
-{
-	unsigned int pixelsSum = 0;
-	for (unsigned int x = 0; x < w; ++x) {
+void integral_image(T1 **inArray, T2 **outArray, uint32_t w, uint32_t h) {
+	uint32_t pixelsSum = 0;
+	for (uint32_t x = 0; x < w; ++x) {
 		pixelsSum += inArray[0][x];
 		outArray[0][x] = pixelsSum;
 	}
 
-	for (unsigned int y = 1; y < h; ++y) {
+	for (uint32_t y = 1; y < h; ++y) {
 		pixelsSum = 0;
-		for (unsigned int x = 0; x < w; ++x) {
+		for (uint32_t x = 0; x < w; ++x) {
 			pixelsSum += inArray[y][x];
 			outArray[y][x] = outArray[y-1][x] + pixelsSum;
 		}
@@ -20,36 +19,37 @@ void integral_image(T1 **inArray, T2 **outArray, unsigned int w, unsigned int h)
 }
 
 template <typename T1 , typename T2>
-void integral_image_sqr(T1 **inArray, T2 **outArray, unsigned int w, unsigned int h)
-{
-	unsigned int x, y;
-	uint64_t suma;
+void integral_image_sqr(T1 **inArray, T2 **outArray, uint32_t w, uint32_t h) {
+	uint64_t pixelsSum = 0;
+	for (uint32_t x = 0; x < w; ++x) {
+		pixelsSum += inArray[0][x] * inArray[0][x];
+		outArray[0][x] = pixelsSum;
+	}
 
-	for (y = 0; y < h; ++y) {
-		suma = 0;
-		for (x = 0; x < w; ++x) {
-			suma += (inArray[y][x] * inArray[y][x]);
-			if (y == 0) outArray[y][x] = suma;
-            else outArray[y][x] = outArray[y-1][x] + suma;
+	for (uint32_t y = 1; y < h; ++y) {
+		pixelsSum = 0;
+		for (uint32_t x = 0; x < w; ++x) {
+			pixelsSum += inArray[y][x] + inArray[y][x];
+			outArray[y][x] = outArray[y-1][x] + pixelsSum;
 		}
 	}
 }
 
 template <typename T = unsigned char>
-uint64_t neighborsSum(T **in, unsigned int r, unsigned int c, unsigned int x_offset, unsigned int y_offset,
-					  unsigned int block_size, unsigned int& elems) {
+uint64_t neighborsSum(T **in, uint32_t r, uint32_t c, uint32_t x_offset, uint32_t y_offset,
+					  uint32_t block_size, uint32_t& elems) {
 	uint64_t sum = 0;
 	// Boundry check
 	// if block is out of pixel array we resize the box to fit into array
-	unsigned int start_posX = 0, start_posY = 0;
-	unsigned int end_posX = r - 1, end_posY = c - 1;
+	uint32_t start_posX = 0, start_posY = 0;
+	uint32_t end_posX = r - 1, end_posY = c - 1;
 	if (int64_t( int64_t(x_offset) - int64_t(block_size) ) > start_posX) start_posX = x_offset - block_size;
 	if (int64_t( int64_t(y_offset) - int64_t(block_size) ) > start_posY) start_posY = y_offset - block_size;
 	if (int64_t( int64_t(x_offset) + int64_t(block_size) ) < end_posX) end_posX = x_offset + block_size;
 	if (int64_t( int64_t(y_offset) + int64_t(block_size) ) < end_posY) end_posY = y_offset + block_size;
 	
-	for (unsigned int i = start_posX; i < end_posX; i++) {
-		for (unsigned int j = start_posY; j < end_posY; j++) {
+	for (uint32_t i = start_posX; i < end_posX; i++) {
+		for (uint32_t j = start_posY; j < end_posY; j++) {
 			elems++;
 			sum += in[i][j];
 		}
@@ -58,20 +58,20 @@ uint64_t neighborsSum(T **in, unsigned int r, unsigned int c, unsigned int x_off
 }
 
 template <typename T = unsigned char>
-uint64_t neighborsSum2(T **in, unsigned int r, unsigned int c, unsigned int x_offset, unsigned int y_offset,
-					   unsigned int block_size, unsigned int& elems) {
+uint64_t neighborsSum2(T **in, uint32_t r, uint32_t c, uint32_t x_offset, uint32_t y_offset,
+					   uint32_t block_size, uint32_t& elems) {
 	uint64_t sum = 0;
 	// Boundry check
 	// if block is out of pixel array we resize the box to fit into array
-	unsigned int start_posX = 0, start_posY = 0;
-	unsigned int end_posX = r - 1, end_posY = c - 1;
+	uint32_t start_posX = 0, start_posY = 0;
+	uint32_t end_posX = r - 1, end_posY = c - 1;
 	if (int64_t(int64_t(x_offset) - int64_t(block_size)) > start_posX) start_posX = x_offset - block_size;
 	if (int64_t(int64_t(y_offset) - int64_t(block_size)) > start_posY) start_posY = y_offset - block_size;
 	if (int64_t(int64_t(x_offset) + int64_t(block_size)) < end_posX) end_posX = x_offset + block_size;
 	if (int64_t(int64_t(y_offset) + int64_t(block_size)) < end_posY) end_posY = y_offset + block_size;
 
-	for (unsigned int i = start_posX; i < end_posX; i++) {
-		for (unsigned int j = start_posY; j < end_posY; j++) {
+	for (uint32_t i = start_posX; i < end_posX; i++) {
+		for (uint32_t j = start_posY; j < end_posY; j++) {
 			elems++;
 			sum += in[i][j] * in[i][j];
 		}		

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include "cImage.h"
-#include <errno.h>
 
 template <typename T>
 cImage<T>::cImage(const std::string fName){
@@ -23,25 +22,30 @@ cImage<T>::cImage(const std::string fName){
 }
 
 template <typename T>
-cImage<T>::cImage(T **gsArr, unsigned int r, unsigned int c) {
-    rows = r; columns = c;
+cImage<T>::cImage(T **gsArr, uint32_t r, uint32_t c) {
+    rows = r;
+    columns = c;
     chG = gsArr;
 }
 
 template <typename T>
-cImage<T>::cImage(T **rArr, T **gArr, T **bArr, unsigned int r, unsigned int c) {
-    rows = r; columns = c;
-    chR = rArr; chG = gArr; chB = bArr;
+cImage<T>::cImage(T **rArr, T **gArr, T **bArr, uint32_t r, uint32_t c) {
+    rows = r;
+    columns = c;
+    chR = rArr;
+    chG = gArr;
+    chB = bArr;
 }
 
 template <typename T>
-cImage<T>::cImage(uint8_t numOfColorChannels, unsigned int r, unsigned int c, unsigned int max_col) {
+cImage<T>::cImage(uint8_t numOfColorChannels, uint32_t r, uint32_t c, uint32_t max_col) {
 
     if (numOfColorChannels == 1) {
-        rows = r; columns = c;
+        rows = r;
+        columns = c;
         chG = new T* [rows];
         chG[0] = new T [rows * columns];
-        for(unsigned int i = 1; i < rows; i++)
+        for(uint32_t i = 1; i < rows; i++)
             chG[i] = chG[i-1] + columns;
 		
 		max_colors = max_col;
@@ -55,7 +59,7 @@ cImage<T>::cImage(uint8_t numOfColorChannels, unsigned int r, unsigned int c, un
         chB = new T* [rows];
         chB[0] = new T[rows * columns];
 
-        for(unsigned int i = 1; i < rows; i++) {
+        for(uint32_t i = 1; i < rows; i++) {
             chR[i] = chR[i-1] + columns;
             chG[i] = chG[i-1] + columns;
             chB[i] = chB[i-1] + columns;
@@ -98,7 +102,7 @@ bool cImage<T>::read() {
                 if ( hpos <= 0 ) return false;
                 chG = new T* [rows];
                 chG[0] = new T[rows * columns];
-                for(unsigned int i = 1; i < rows; i++) {
+                for(uint32_t i = 1; i < rows; i++) {
                     chG[i] = chG[i-1] + columns;
                 }
 	            if( readPGMB_data(hpos) == 0 ) return false;
@@ -114,7 +118,7 @@ bool cImage<T>::read() {
                 chB = new T* [rows];
                 chB[0] = new T[rows * columns];
 
-                for(unsigned int i = 1; i < rows; i++) {
+                for(uint32_t i = 1; i < rows; i++) {
                     chR[i] = chR[i-1] + columns;
                     chG[i] = chG[i-1] + columns;
                     chB[i] = chB[i-1] + columns;
@@ -141,13 +145,13 @@ bool cImage<T>::write(const std::string fName) {
         if (fileExt == "pgm") {
             srcFileType = eFileType::pgm;
             if (isGreyscale()) {
-                writePGMB_image(srcFileName.c_str());
+                return (bool)writePGMB_image(srcFileName.c_str());
             }
         }
         else if (fileExt == "ppm") {
             srcFileType = eFileType::ppm;
             if (isRgb()) {
-                writePPMB_image(srcFileName.c_str());
+                return (bool)writePPMB_image(srcFileName.c_str());
             }
         }
         // TODO: handle other 
@@ -155,6 +159,7 @@ bool cImage<T>::write(const std::string fName) {
             throw std::invalid_argument("File extension " + fileExt +" not supported");
         }
     }
+    return false;
 }
 
 template <typename T>
@@ -190,7 +195,7 @@ void cImage<T>::skipcomments(FILE *fp) {
 	char line[256];
 
 	while ((ch = fgetc(fp)) != EOF && isspace(ch))
-		;
+    ;
 	if (ch == '#') {
 		fgets(line, sizeof(line), fp);
 		skipcomments(fp);
@@ -236,7 +241,7 @@ int cImage<T>::readPGMB_header() {
 }
 
 template <typename T>
-int cImage<T>::readPGMB_data(unsigned int headerLength) {
+int cImage<T>::readPGMB_data(uint32_t headerLength) {
     FILE *fp;
 	if((fp = fopen(srcFileName.c_str(), "rb")) == NULL) return 0;
 	fseek(fp, headerLength, SEEK_SET);
@@ -253,7 +258,6 @@ int cImage<T>::writePGMB_image(const std::string fname) {
     FILE *fp;
 
 	if ((fp = fopen(fname.c_str(), "wb")) == NULL) {
-		std::cout << errno;
 		return(0);
 	}
 
@@ -302,7 +306,7 @@ int cImage<T>::readPPMB_header() {
 }
 
 template <typename T>
-int cImage<T>::readPPMB_data(unsigned int headerLength) {
+int cImage<T>::readPPMB_data(uint32_t headerLength) {
     long i, wxh;
 	FILE *fp;
 
@@ -346,7 +350,7 @@ int cImage<T>::writePPMB_image(const std::string fname ) {
 
 template class cImage<unsigned char>;
 template class cImage<char>;
-template class cImage<unsigned int>;
+template class cImage<uint32_t>;
 template class cImage<int>;
 template class cImage<unsigned long>;
 template class cImage<long>;

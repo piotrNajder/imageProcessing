@@ -22,6 +22,6 @@ void integral_image_test();
 void integral_image_sqr_test();
 
 // Workaround for linker problems with template functions
-#include "imgUtils.cpp"
+#include "../src/imgUtils.cpp"
 
 #endif
