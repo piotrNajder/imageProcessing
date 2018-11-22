@@ -12,10 +12,10 @@ tPoint timeNow() { return std::chrono::high_resolution_clock::now(); }
 
 void grayscaleImageBinarization(const std::string fName);
 void rgbImageBinarization(const std::string fName);
-void bradleyBinarization(const std::string fName);              // Implemented to work only with grayscale images
-void sauvolaBinarizationIntegralImage(const std::string fName); // Implemented to work only with grayscale images
-void sauvolaBinarizationSimple(const std::string fName);        // Implemented to work only with grayscale images
-void niblackBinarization(const std::string fName);              // Implemented to work only with grayscale images
+void bradleyBinarization(const std::string fName);          // Implemented to work only with grayscale images
+void sauvolaBinarizationIntegralImage(const std::string fName);          // Implemented to work only with grayscale images
+void sauvolaBinarizationSimple(const std::string fName);
+void niblackBinarization(const std::string fName);          // Implemented to work only with grayscale images
 
 int main(int argc, char *argv[]) {
 
@@ -25,37 +25,15 @@ int main(int argc, char *argv[]) {
 	const std::string inF4 = "./input/book_rgb_small.ppm";          // 652 x 370 x 24 BPP
 	const std::string inF5 = "./input/book_rgb.ppm";                // 2048 x 1536 x 24 BPP
 	const std::string inF6 = "./input/book_rgb_big.ppm";            // 4096 x 3072 x 24 BPP
-	/*
-	grayscaleImageBinarization(inF1);
-	grayscaleImageBinarization(inF2);
-	grayscaleImageBinarization(inF3);
-
-	std::cout << "\n####################################\n\n";
-
-	rgbImageBinarization(inF4);
-	rgbImageBinarization(inF5);
-	rgbImageBinarization(inF6);
-
-	std::cout << "\n####################################\n\n";
-		
-	bradleyBinarization(inF1);
-	bradleyBinarization(inF2);
-	bradleyBinarization(inF3);
-
-	std::cout << "\n####################################\n\n";
-	*/
-	sauvolaBinarizationIntegralImage(inF1);
-	sauvolaBinarizationIntegralImage(inF2);
-	sauvolaBinarizationIntegralImage(inF3);
-
-
-	/*
-	std::cout << "\n####################################\n\n";
 	
-	niblackBinarization(inF1);
-	niblackBinarization(inF2);
-	niblackBinarization(inF3);
-	*/
+	//sauvolaBinarizationIntegralImage(inF1);
+	//sauvolaBinarizationIntegralImage(inF2);
+	//sauvolaBinarizationIntegralImage(inF3);
+
+	sauvolaBinarizationSimple(inF1);
+	sauvolaBinarizationSimple(inF2);
+	sauvolaBinarizationSimple(inF3);
+
 	return 0;
 }
 
@@ -229,7 +207,6 @@ void sauvolaBinarizationIntegralImage(const std::string fName) {
 	std::cout << outFileName + "." + fileExt + " Sauvola binarization time: " << duration1 << std::endl;
 }
 
-
 void sauvolaBinarizationSimple(const std::string fName) {
 	cImage<> inImg = cImage<>(fName);
 	std::size_t dotPos = fName.find_last_of(".");
@@ -239,39 +216,30 @@ void sauvolaBinarizationSimple(const std::string fName) {
 	std::string outFileName = fName.substr(slashPos + 1, dotPos - slashPos - 1);
 
 	cImage<> outImg = cImage<>(1, inImg.rows, inImg.columns);
-	cImage<pixelArrayUInt> intImg = cImage<pixelArrayUInt>(1, inImg.rows, inImg.columns);
-	cImage<pixelArrayUInt> int_II_Img = cImage<pixelArrayUInt>(1, inImg.rows, inImg.columns);
 
 	tPoint t1 = timeNow();
 
-	integral_image(inImg.chG, intImg.chG, inImg.columns, inImg.rows);
-	integral_image_sqr(inImg.chG, int_II_Img.chG, inImg.columns, inImg.rows);
+	unsigned int n = 7;
+	unsigned int ncount = 0;
 
-	int n = 7;
-	int ncount = (2 * n + 1) * (2 * n + 1);
-
-	float sum = 0;	//suma jasnosci
-	float sum2 = 0;	//suma kwadratow jasnosci
+	uint64_t sum = 0;	//suma jasnosci
+	uint64_t sum2 = 0;	//suma kwadratow jasnosci
 	float m = 0.0;	//srednia jasnosc
 	float s = 0.0;	//odchylenie standardowe
 	float T = 0.0;
 	float Rmax = 128.0;
 	float k = 0.12f;
 
-	for (unsigned int i = n + 1; i < inImg.rows - n; ++i) {
-		for (unsigned int j = n + 1; j < inImg.columns - n; ++j) {
+	for (unsigned int i = 0; i < inImg.rows; ++i) {
+		for (unsigned int j = 0; j < inImg.columns; ++j) {
 
-			sum = intImg.chG[i + n][j + n] +
-				intImg.chG[i - n - 1][j - n - 1] -
-				intImg.chG[i - n - 1][j + n] -
-				intImg.chG[i + n][j - n - 1];
-			sum2 = int_II_Img.chG[i + n][j + n] +
-				int_II_Img.chG[i - n - 1][j - n - 1] -
-				int_II_Img.chG[i - n - 1][j + n] -
-				int_II_Img.chG[i + n][j - n - 1];
-
+			sum = neighborsSum<>(inImg.chG, inImg.rows, inImg.columns, i, j, n, ncount);
 			m = sum / ncount;
+			ncount = 0;
+
+			sum2 = neighborsSum2<>(inImg.chG, inImg.rows, inImg.columns, i, j, n, ncount);
 			s = sqrt(sum2 / ncount - m * m);
+			ncount = 0;
 
 			T = (m * (1.0 + k * (s / Rmax - 1.0)));    //Sauvola method
 
@@ -281,11 +249,11 @@ void sauvolaBinarizationSimple(const std::string fName) {
 
 	tPoint t2 = timeNow();
 
-	outImg.write("./output/" + outFileName + "_SauvolaBin" + "." + fileExt);
+	outImg.write("./output/" + outFileName + "_SauvolaSimpleBin" + "." + fileExt);
 
 	auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
-	std::cout << outFileName + "." + fileExt + " Sauvola binarization time: " << duration1 << std::endl;
+	std::cout << outFileName + "." + fileExt + " Sauvola binarization simple time: " << duration1 << std::endl;
 }
 
 void niblackBinarization(const std::string fName) {

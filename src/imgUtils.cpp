@@ -1,5 +1,4 @@
 #ifdef IMGUTILS_H
-
 #include "imgUtils.h"
 
 template <typename T1, typename T2>
@@ -34,6 +33,50 @@ void integral_image_sqr(T1 **inArray, T2 **outArray, unsigned int w, unsigned in
             else outArray[y][x] = outArray[y-1][x] + suma;
 		}
 	}
+}
+
+template <typename T = unsigned char>
+uint64_t neighborsSum(T **in, unsigned int r, unsigned int c, unsigned int x_offset, unsigned int y_offset,
+					  unsigned int block_size, unsigned int& elems) {
+	uint64_t sum = 0;
+	// Boundry check
+	// if block is out of pixel array we resize the box to fit into array
+	unsigned int start_posX = 0, start_posY = 0;
+	unsigned int end_posX = r - 1, end_posY = c - 1;
+	if (int64_t( int64_t(x_offset) - int64_t(block_size) ) > start_posX) start_posX = x_offset - block_size;
+	if (int64_t( int64_t(y_offset) - int64_t(block_size) ) > start_posY) start_posY = y_offset - block_size;
+	if (int64_t( int64_t(x_offset) + int64_t(block_size) ) < end_posX) end_posX = x_offset + block_size;
+	if (int64_t( int64_t(y_offset) + int64_t(block_size) ) < end_posY) end_posY = y_offset + block_size;
+	
+	for (unsigned int i = start_posX; i < end_posX; i++) {
+		for (unsigned int j = start_posY; j < end_posY; j++) {
+			elems++;
+			sum += in[i][j];
+		}
+	}
+	return sum;
+}
+
+template <typename T = unsigned char>
+uint64_t neighborsSum2(T **in, unsigned int r, unsigned int c, unsigned int x_offset, unsigned int y_offset,
+					   unsigned int block_size, unsigned int& elems) {
+	uint64_t sum = 0;
+	// Boundry check
+	// if block is out of pixel array we resize the box to fit into array
+	unsigned int start_posX = 0, start_posY = 0;
+	unsigned int end_posX = r - 1, end_posY = c - 1;
+	if (int64_t(int64_t(x_offset) - int64_t(block_size)) > start_posX) start_posX = x_offset - block_size;
+	if (int64_t(int64_t(y_offset) - int64_t(block_size)) > start_posY) start_posY = y_offset - block_size;
+	if (int64_t(int64_t(x_offset) + int64_t(block_size)) < end_posX) end_posX = x_offset + block_size;
+	if (int64_t(int64_t(y_offset) + int64_t(block_size)) < end_posY) end_posY = y_offset + block_size;
+
+	for (unsigned int i = start_posX; i < end_posX; i++) {
+		for (unsigned int j = start_posY; j < end_posY; j++) {
+			elems++;
+			sum += in[i][j] * in[i][j];
+		}		
+	}
+	return sum;
 }
 
 void integral_image_test() {
