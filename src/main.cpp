@@ -149,31 +149,34 @@ void bradleyBinarization(const std::string fName, uint32_t bs) {
 void sauvolaBinarizationIntegralImage(const std::string fName, uint32_t bs) {
 
 	cImage<> inImg = cImage<>(fName);
+	cImage<> inImgPadded = cImage<>(1, inImg.rows + 2 * bs, inImg.columns + 2 * bs);
+	copyWithPadding(inImg.chG, inImgPadded.chG, inImg.rows, inImg.columns, inImgPadded.rows, inImgPadded.columns);
+
 	cImage<> outImg = cImage<>(1, inImg.rows, inImg.columns);
-	cImage<pixelUInt> intImg = cImage<pixelUInt>(1, inImg.rows, inImg.columns);
-	cImage<pixelUInt> int_II_Img = cImage<pixelUInt>(1, inImg.rows, inImg.columns);
+	cImage<pixelUInt> intImg = cImage<pixelUInt>(1, inImgPadded.rows, inImgPadded.columns);
+	cImage<pixelUInt> int_II_Img = cImage<pixelUInt>(1, inImgPadded.rows, inImgPadded.columns);
 
 	tPoint t1 = timeNow();
 
-	integral_image(inImg.chG, intImg.chG, inImg.columns, inImg.rows);
-	integral_image_sqr(inImg.chG, int_II_Img.chG, inImg.columns, inImg.rows);
+	integral_image(inImgPadded.chG, intImg.chG, inImgPadded.columns, inImgPadded.rows);
+	integral_image_sqr(inImgPadded.chG, int_II_Img.chG, inImgPadded.columns, inImgPadded.rows);
 
 	int ncount = (2 * bs + 1) * (2 * bs + 1);	
 	
 	const float Rmax = 128.0;
 	const float k = 0.12f;
 
-	for (uint32_t i = bs + 1; i < inImg.rows - bs; ++i) {
-		for (uint32_t j = bs + 1; j < inImg.columns - bs; ++j) {
+	for (uint32_t i = 0, m = bs; m < inImgPadded.rows - bs; ++i, ++m) {
+		for (uint32_t j = 0, l = bs; l < inImgPadded.columns - bs; ++j, ++l) {
 
-			float sum = intImg.chG[i + bs][j + bs] +
-						intImg.chG[i - bs - 1][j - bs - 1] -
-						intImg.chG[i - bs - 1][j + bs] -
-						intImg.chG[i + bs][j - bs - 1];
-			float sum2 = int_II_Img.chG[i + bs][j + bs] +
-						 int_II_Img.chG[i - bs - 1][j - bs - 1] -
-						 int_II_Img.chG[i - bs - 1][j + bs] -
-						 int_II_Img.chG[i + bs][j - bs - 1];
+			float sum = intImg.chG[m + bs][l + bs] +
+						intImg.chG[m - bs][l - bs] -
+						intImg.chG[m - bs][l + bs] -
+						intImg.chG[m + bs][l - bs];
+			float sum2 = int_II_Img.chG[m + bs][l + bs] +
+						 int_II_Img.chG[m - bs][l - bs] -
+						 int_II_Img.chG[m - bs][l + bs] -
+						 int_II_Img.chG[m + bs][l - bs];
 
 			float mean = sum / ncount;
 			float std_dev = sqrt(sum2 / ncount - mean * mean);

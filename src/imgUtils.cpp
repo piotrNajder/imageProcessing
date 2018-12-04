@@ -81,24 +81,54 @@ uint64_t neighborsSum2(T **in, uint32_t r, uint32_t c, uint32_t x_offset, uint32
 	return sum;
 }
 
-template <typename T1 = unsigned char, typename T2 = unsigned char>
-void copy_and_fill(T1 **inArray, T2 **outArray, uint32_t c_in, uint32_t r_in, uint32_t c_out, uint32_t r_out) {
-	
-	uint32_t cols_diff = c_out - c_in;
-	uint32_t rows_diff = r_out - r_in;
+template <typename T = unsigned char>
+void copyWithPadding(T **inArray, T **outArray, uint32_t inRows, uint32_t inCols, uint32_t outRows, uint32_t outCols) {
+	int32_t paddRows = outRows - inRows;
+	int32_t paddCols = outCols - inCols;
 
-	if (cols_diff < 2 || cols_diff % 2 != 0 ||
-	    rows_diff < 2 || rows_diff % 2 != 0 ) {
-			return;
+	if (paddRows < 2 || paddCols < 2) {
+		return;
+	}
+
+	// Ensure corners of new picture are set to 0
+	memset(outArray[0], 0, outRows * outCols);
+
+	int32_t rowsOffset = paddRows / 2;
+	int32_t colsOffset = paddCols / 2;
+
+	// Start with copy of orginal image into padded image
+	for (int32_t r = 0; r < (int32_t)inRows; r++) {
+		for (int32_t c = 0; c < (int32_t)inCols; c++)
+			outArray[r + rowsOffset][c + colsOffset] = inArray[r][c];
+	}
+
+	//Fill the padded column - LEFT padding
+	for (int32_t r = rowsOffset; r < (int32_t)(inRows + rowsOffset); r++) {
+		for (int32_t c_out = colsOffset, c_in = inCols - 1;
+			c_out >= 0; c_out--, c_in--) {
+			outArray[r][c_out] = inArray[r - rowsOffset][c_in];
 		}
-
-	// Copy input image in the middle of output image
-	uint32_t c_offset = cols_diff / 2;
-	uint32_t r_offset = rows_diff / 2;
-	for (uint32_t i = 0; i < c_in; i++) {
-		for (uint32_t j = 0; j < r_in; j++) {
-			outArray[i + r_offset][j + c_offset] = inArray[i][j];
-		}		
+	}
+	//Fill the padded column - RIGHT padding
+	for (int32_t r = rowsOffset; r < (int32_t)(inRows + rowsOffset); r++) {
+		for (int32_t c_out = inCols, c_in = 0;
+			c_out < (int32_t)outCols; c_out++, c_in++) {
+			outArray[r][c_out] = inArray[r - rowsOffset][c_in];
+		}
+	}
+	//Fill the padded rows - TOP padding
+	for (int32_t r_out = rowsOffset - 1, r_in = inRows - 1;
+		r_out < 0; r_out--, r_in--) {
+		for (int32_t c = colsOffset; c < (int32_t)outCols - colsOffset; c++) {
+			outArray[r_out][c] = inArray[r_in][c - colsOffset];
+		}
+	}
+	//Fill the padded rows - BOTTOM padding
+	for (int32_t r_out = outRows - rowsOffset, r_in = 0;
+		r_out < (int32_t)outRows; r_out++, r_in++) {
+		for (int32_t c = colsOffset; c < (int32_t)(outCols - colsOffset); c++) {
+			outArray[r_out][c] = inArray[r_in][c - colsOffset];
+		}
 	}
 }
 
