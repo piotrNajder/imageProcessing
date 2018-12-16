@@ -166,17 +166,18 @@ void sauvolaBinarizationIntegralImage(const std::string fName, uint32_t bs) {
 	const float Rmax = 128.0;
 	const float k = 0.12f;
 
-	for (uint32_t i = 0, m = bs; m < inImgPadded.rows - bs; ++i, ++m) {
-		for (uint32_t j = 0, l = bs; l < inImgPadded.columns - bs; ++j, ++l) {
+	for (uint32_t i = 0, m = bs + 1; m < inImgPadded.rows - bs; ++i, ++m) {
+		for (uint32_t j = 0, l = bs + 1; l < inImgPadded.columns - bs; ++j, ++l) {
 
 			float sum = intImg.chG[m + bs][l + bs] +
-						intImg.chG[m - bs][l - bs] -
-						intImg.chG[m - bs][l + bs] -
-						intImg.chG[m + bs][l - bs];
+						intImg.chG[m - bs - 1][l - bs - 1] -
+						intImg.chG[m - bs - 1][l + bs] -
+						intImg.chG[m + bs][l - bs - 1];
+
 			float sum2 = int_II_Img.chG[m + bs][l + bs] +
-						 int_II_Img.chG[m - bs][l - bs] -
-						 int_II_Img.chG[m - bs][l + bs] -
-						 int_II_Img.chG[m + bs][l - bs];
+						 int_II_Img.chG[m - bs - 1][l - bs - 1] -
+						 int_II_Img.chG[m - bs - 1][l + bs] -
+						 int_II_Img.chG[m + bs][l - bs - 1];
 
 			float mean = sum / ncount;
 			float std_dev = sqrt(sum2 / ncount - mean * mean);
